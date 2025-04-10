@@ -1,0 +1,62 @@
+[
+  {
+    "vendor": "Microsoft",
+    "product": "Windows"
+  },
+  {
+    "vendor": "Microsoft", 
+    "product": "Exchange Server"
+  },
+  {
+    "vendor": "Adobe",
+    "product": "Acrobat"
+  },
+  {
+    "vendor": "Apache",
+    "product": "Log4j"
+  },
+  {
+    "vendor": "Cisco",
+    "product": "IOS"
+  },
+  {
+    "vendor": "Oracle",
+    "product": "WebLogic"
+  },
+  {
+    "vendor": "VMware",
+    "product": "vCenter"
+  },
+  {
+    "vendor": "F5",
+    "product": "BIG-IP"
+  },
+  {
+    "vendor": "Google",
+    "product": "Chrome"
+  },
+  {
+    "vendor": "Apple",
+    "product": "iOS"
+  },
+  {
+    "vendor": "Citrix",
+    "product": "ADC"
+  },
+  {
+    "vendor": "OpenSSL",
+    "product": "OpenSSL"
+  },
+  {
+    "vendor": "QNAP",
+    "product": "NAS"
+  },
+  {
+    "vendor": "Fortinet",
+    "product": "FortiOS"
+  },
+  {
+    "vendor": "SonicWall",
+    "product": "SMA"
+  }
+]
