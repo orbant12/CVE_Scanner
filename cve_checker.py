@@ -36,6 +36,8 @@ import textwrap as tw
 from typing import Dict, List, Tuple, Set
 import urllib.request
 import urllib.parse
+import tempfile
+from slack import SlackNotifier
 
 # ANSI color codes for terminal output
 class Colors:
@@ -685,19 +687,18 @@ class CVEChecker:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Check CISA KEV and NVD databases for CVEs related to specific vendors and products',
+        description='Check for CVEs and notify Slack if vulnerabilities are found',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python cve_checker.py --timeframe TODAY --vendor-product-file vendors.json
-  python cve_checker.py --timeframe "THIS WEEK" --vendor-product "Microsoft:Windows"
-  python cve_checker.py --timeframe "THIS MONTH" --vendors-json '[{"vendor":"Microsoft","product":"Windows 10"}]' --csv report.csv --json report.json
+  python integration_example.py --timeframe "THIS WEEK" --vendor-product "Microsoft:Windows" --slack-webhook https://hooks.slack.com/services/XXX/YYY/ZZZ
+  python integration_example.py --timeframe "THIS MONTH" --vendor-product-file vendors.json
 """
     )
     
     # Define timeframe argument
     parser.add_argument('--timeframe', type=str, choices=['TODAY', 'THIS WEEK', 'THIS MONTH'], 
-                       default='TODAY', help='Timeframe to check for vulnerabilities')
+                       default='THIS MONTH', help='Timeframe to check for vulnerabilities')
     
     # Define mutually exclusive group for vendor-product input
     input_group = parser.add_mutually_exclusive_group(required=True)
@@ -708,9 +709,9 @@ Examples:
     input_group.add_argument('--vendors-json', type=str,
                            help='JSON string with vendor/product pairs')
     
-    # Add export options
-    parser.add_argument('--csv', type=str, help='Export results to CSV file')
-    parser.add_argument('--json', type=str, help='Export results to JSON file')
+    # Add no-notify option to disable Slack notification
+    parser.add_argument('--no-notify', action='store_true',
+                      help='Disable Slack notifications')
     
     # Add output formatting option
     parser.add_argument('--no-color', action='store_true', 
@@ -718,19 +719,13 @@ Examples:
     
     args = parser.parse_args()
     
-    # Disable colors if requested
-    if args.no_color:
-        Colors.disable()
-    
-    # Create checker instance
+    # Create CVE checker instance
     checker = CVEChecker()
     
-    # Parse vendor-product inputs
+    # Parse vendor-product inputs (simplified - using the checker's methods)
     if args.vendor_product_file:
         vendor_products = checker.parse_vendor_product_file(args.vendor_product_file)
-        print(f"{Colors.GREEN}✓ Loaded {len(vendor_products)} vendor-product pairs from {args.vendor_product_file}{Colors.ENDC}")
     elif args.vendors_json:
-        # Parse JSON string from command line
         try:
             data = json.loads(args.vendors_json)
             vendor_products = []
@@ -738,22 +733,15 @@ Examples:
                 for item in data:
                     if isinstance(item, dict) and 'vendor' in item and 'product' in item:
                         vendor_products.append((item['vendor'].strip(), item['product'].strip()))
-                    else:
-                        print(f"{Colors.YELLOW}⚠️ Warning: Ignoring invalid JSON item format: {item}{Colors.ENDC}", file=sys.stderr)
-            else:
-                print(f"{Colors.RED}✗ Error: JSON string does not contain a list{Colors.ENDC}", file=sys.stderr)
-                sys.exit(1)
-            print(f"{Colors.GREEN}✓ Loaded {len(vendor_products)} vendor-product pairs from JSON string{Colors.ENDC}")
         except json.JSONDecodeError as e:
-            print(f"{Colors.RED}✗ Error parsing JSON string: {e}{Colors.ENDC}", file=sys.stderr)
-            sys.exit(1)
+            print(f"Error parsing JSON string: {e}")
+            return
     else:
         parts = args.vendor_product.split(':', 1)
         if len(parts) != 2:
-            print(f"{Colors.RED}✗ Error: Invalid vendor-product format. Use 'vendor:product'{Colors.ENDC}", file=sys.stderr)
-            sys.exit(1)
+            print(f"Error: Invalid vendor-product format. Use 'vendor:product'")
+            return
         vendor_products = [(parts[0].strip(), parts[1].strip())]
-        print(f"{Colors.GREEN}✓ Using vendor-product pair: {vendor_products[0][0]}:{vendor_products[0][1]}{Colors.ENDC}")
     
     # Search for vulnerabilities
     vulnerabilities = checker.search_vulnerabilities(
@@ -761,14 +749,55 @@ Examples:
         args.timeframe
     )
     
-    # Display and export results
+    # Display results in the terminal
     checker.display_results(vulnerabilities)
     
-    if args.csv:
-        checker.export_csv(vulnerabilities, args.csv)
-    
-    if args.json:
-        checker.export_json(vulnerabilities, args.json)
+    # Only notify if there are vulnerabilities and notifications are enabled
+    if vulnerabilities and not args.no_notify:
+        # Create a temporary file to store the results
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
+            # Create a report structure with metadata and results
+            report = {
+                "metadata": {
+                    "generated_at": checker.stats.get('generated_at', 'N/A'),
+                    "total_vulnerabilities": len(vulnerabilities),
+                    "cisa_matches": checker.stats.get('cisa_matches', 0),
+                    "nvd_matches": checker.stats.get('nvd_matches', 0),
+                    "severity_breakdown": {
+                        "critical": checker.stats.get('critical_count', 0),
+                        "high": checker.stats.get('high_count', 0),
+                        "medium": checker.stats.get('medium_count', 0),
+                        "low": checker.stats.get('low_count', 0),
+                        "unknown": checker.stats.get('unknown_count', 0)
+                    }
+                },
+                "vulnerabilities": vulnerabilities
+            }
+            
+            # Write the report to the temp file
+            json.dump(report, temp_file, indent=2)
+            temp_file_name = temp_file.name
+        
+        try:
+            # Create Slack notifier (uses .env for credentials)
+            notifier = SlackNotifier()
+            
+            # Send notification
+            success = notifier.notify_if_vulnerabilities(vulnerabilities, report["metadata"])
+            
+            if success:
+                print(f"\nSuccessfully sent notification to Slack")
+            else:
+                print(f"\nFailed to send notification to Slack. Check your .env file.")
+        except Exception as e:
+            print(f"Error sending Slack notification: {e}")
+        finally:
+            # Remove the temporary file
+            os.unlink(temp_file_name)
+    elif not vulnerabilities:
+        print(f"\nNo vulnerabilities found. No Slack notification sent.")
+    elif args.no_notify:
+        print(f"\nSlack notifications disabled. No notification sent.")
 
 
 if __name__ == "__main__":
