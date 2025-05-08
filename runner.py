@@ -90,12 +90,17 @@ Examples:
   python cve_slack_runner.py --timeframe "TODAY"
   python cve_slack_runner.py --timeframe "THIS WEEK"
   python cve_slack_runner.py --timeframe "THIS MONTH"
+  python cve_slack_runner.py --delete-last-message
 """
     )
     
     # Define timeframe argument
     parser.add_argument('--timeframe', type=str, choices=['TODAY', 'THIS WEEK', 'THIS MONTH'], 
                        default='TODAY', help='Timeframe to check for vulnerabilities')
+    
+    # Add option to delete the last message
+    parser.add_argument('--delete-last-message', action='store_true',
+                       help='Delete the last message sent by this bot')
     
     # Parse arguments
     args = parser.parse_args()
@@ -112,6 +117,31 @@ Examples:
         print(f"  SLACK_BOT_TOKEN: {'Set' if slack_token else 'Missing'}")
         print(f"  SLACK_CHANNEL_ID: {'Set' if slack_channel_id else 'Missing'}")
         sys.exit(1)
+    
+    # Create Slack notifier
+    notifier = SlackNotifier()
+    
+    # Handle message deletion if requested
+    if args.delete_last_message:
+        # Read the last message timestamp from a file
+        last_msg_file = Path(__file__).parent / '.last_slack_message'
+        if last_msg_file.exists():
+            with open(last_msg_file, 'r') as f:
+                last_msg_ts = f.read().strip()
+                if last_msg_ts:
+                    print(f"Attempting to delete last message with timestamp: {last_msg_ts}")
+                    success = notifier.delete_message(last_msg_ts)
+                    if success:
+                        print("Successfully deleted last message!")
+                        # Remove the file after successful deletion
+                        last_msg_file.unlink()
+                    return 0 if success else 1
+                else:
+                    print("No message timestamp found in file")
+                    return 1
+        else:
+            print("No previous message found to delete")
+            return 1
     
     # Load vendor-product pairs
     vendor_products = load_vendor_products()
@@ -163,14 +193,17 @@ Examples:
             temp_file_name = temp_file.name
         
         try:
-            # Create Slack notifier (uses .env for credentials)
-            notifier = SlackNotifier()
-            
             # Send notification
-            success = notifier.notify_if_vulnerabilities(vulnerabilities, report["metadata"])
+            success, message_ts = notifier.notify_if_vulnerabilities(vulnerabilities, report["metadata"])
             
-            if success:
+            if success and message_ts:
                 print(f"\nSuccessfully sent notification to Slack")
+                
+                # Save the message timestamp for potential deletion later
+                last_msg_file = Path(__file__).parent / '.last_slack_message'
+                with open(last_msg_file, 'w') as f:
+                    f.write(message_ts)
+                print(f"Message timestamp {message_ts} saved to {last_msg_file}")
             else:
                 print(f"\nFailed to send notification to Slack. Check your .env file.")
         except Exception as e:

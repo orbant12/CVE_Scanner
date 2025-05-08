@@ -168,6 +168,10 @@ class SlackNotifier:
             product = vuln.get('product', 'Unknown')
             description = vuln.get('description', 'No description available')
             
+            # Get required action and references
+            required_action = vuln.get('required_action', 'Apply vendor patches when available')
+            references = vuln.get('references', [])
+            
             # Truncate description if too long
             if len(description) > 300:
                 description = description[:297] + "..."
@@ -185,12 +189,45 @@ class SlackNotifier:
             if vuln.get('ransomware_use', False):
                 title += " ⚠️ *RANSOMWARE*"
             
+            # Main vulnerability info block
             blocks.append({
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
                     "text": f"{title}\n*Affects:* {vendor} {product}\n{description}"
                 }
+            })
+            
+            # Add Required Action section
+            blocks.append({
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*Required Action:*\n{required_action}"
+                }
+            })
+            
+            # Add References section if available
+            if references:
+                # Format references as a numbered list
+                refs_text = "*References:*\n"
+                for i, ref in enumerate(references[:5], 1):  # Limit to first 5 references
+                    refs_text += f"{i}. <{ref}|{ref.split('/')[-1] if '/' in ref else ref}>\n"
+                
+                if len(references) > 5:
+                    refs_text += f"_...and {len(references) - 5} more references_"
+                
+                blocks.append({
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": refs_text
+                    }
+                })
+            
+            # Add a small divider between vulnerabilities for clarity
+            blocks.append({
+                "type": "divider"
             })
         
         # If we had to truncate vulnerabilities, add a note
@@ -212,7 +249,7 @@ class SlackNotifier:
             "elements": [
                 {
                     "type": "mrkdwn",
-                    "text": "Run `python cve_checker.py` with appropriate parameters for full details."
+                    "text": "Ticketing system will be implemented here"
                 }
             ]
         })
@@ -221,7 +258,42 @@ class SlackNotifier:
             "blocks": blocks
         }
     
-    def send_notification(self, message_payload: Dict) -> bool:
+    def delete_message(self, message_ts: str) -> bool:
+        """Delete a specific Slack message by timestamp"""
+        if not self.token or not self.channel_id or not message_ts:
+            print("⚠️ Cannot delete message: Missing token, channel ID, or message timestamp.")
+            return False
+        
+        try:
+            # Build the request to delete a message
+            delete_url = "https://slack.com/api/chat.delete"
+            
+            headers = {
+                'Authorization': f'Bearer {self.token}',
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+            
+            payload = {
+                "channel": self.channel_id,
+                "ts": message_ts
+            }
+            
+            # Send the delete request
+            response = requests.post(delete_url, json=payload, headers=headers)
+            response_data = response.json()
+            
+            if response.status_code == 200 and response_data.get('ok'):
+                print(f"✅ Successfully deleted message from Slack channel")
+                return True
+            else:
+                error = response_data.get('error', 'Unknown error')
+                print(f"⚠️ Failed to delete message: {error}")
+                return False
+        except Exception as e:
+            print(f"⚠️ Error deleting message: {e}")
+            return False
+    
+    def send_notification(self, message_payload: Dict) -> tuple:
         """Send the notification to Slack using the bot token"""
         if not self.token or not self.channel_id or not message_payload:
             print("⚠️ Cannot send notification: Missing token, channel ID, or message content.")
@@ -229,7 +301,7 @@ class SlackNotifier:
                 print("   - SLACK_BOT_TOKEN is not set in .env file or environment")
             if not self.channel_id:
                 print("   - SLACK_CHANNEL_ID is not set in .env file or environment")
-            return False
+            return False, None
         
         try:
             # Add the channel to the payload
@@ -253,28 +325,29 @@ class SlackNotifier:
             
             if response.status_code == 200 and response_data.get('ok'):
                 print(f"✅ Successfully sent notification to Slack channel ID '{self.channel_id}'")
-                return True
+                message_ts = response_data.get('ts')  # Get the message timestamp
+                return True, message_ts
             else:
                 error = response_data.get('error', 'Unknown error')
                 print(f"⚠️ Failed to send notification to Slack: {error}")
-                return False
+                return False, None
         except Exception as e:
             print(f"⚠️ Error sending notification to Slack: {e}")
-            return False
+            return False, None
     
-    def notify_if_vulnerabilities(self, vulnerabilities: List[Dict], metadata: Optional[Dict] = None) -> bool:
+    def notify_if_vulnerabilities(self, vulnerabilities: List[Dict], metadata: Optional[Dict] = None) -> tuple:
         """Check if there are vulnerabilities and notify if needed"""
         if not vulnerabilities:
             print("ℹ️ No vulnerabilities found. No notification sent.")
-            return False
+            return False, None
         
         message = self.format_slack_message(vulnerabilities, metadata)
-        success = self.send_notification(message)
+        success, message_ts = self.send_notification(message)
         
         if not success:
             print("⚠️ Failed to send notification to Slack. Please check your .env file for SLACK_BOT_TOKEN and SLACK_CHANNEL_ID.")
         
-        return success
+        return success, message_ts
 
 
 def main():

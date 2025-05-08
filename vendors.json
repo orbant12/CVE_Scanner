@@ -1,22 +1,267 @@
 [
   {
     "vendor": "Microsoft",
-    "product": "Windows"
+    "product": "Windows OS"
   },
   {
-    "vendor": "Microsoft", 
-    "product": "Exchange Server"
+    "vendor": "Microsoft",
+    "product": "Azure"
+  },
+  {
+    "vendor": "Microsoft",
+    "product": "InTune MDM"
+  },
+  {
+    "vendor": "Apple",
+    "product": "Mac OS"
+  },
+  {
+    "vendor": "Apple",
+    "product": "IOS"
+  },
+  {
+    "vendor": "Google",
+    "product": "Google Cloud"
+  },
+  {
+    "vendor": "Google",
+    "product": "Google Workspace"
+  },
+  {
+    "vendor": "Google",
+    "product": "BigQuery"
+  },
+  {
+    "vendor": "Oracle",
+    "product": "NetSuite"
+  },
+  {
+    "vendor": "CloudFlare",
+    "product": "CloudFlare"
+  },
+  {
+    "vendor": "GitHub",
+    "product": "GitHub"
+  },
+  {
+    "vendor": "Salesforce",
+    "product": "Salesforce"
+  },
+  {
+    "vendor": "Slack",
+    "product": "Slack"
+  },
+  {
+    "vendor": "SentinelOne",
+    "product": "Antivirus"
+  },
+  {
+    "vendor": "1Password",
+    "product": "Business"
+  },
+  {
+    "vendor": "3CX",
+    "product": "3CX"
   },
   {
     "vendor": "Adobe",
-    "product": "Acrobat"
+    "product": "Adobe"
   },
   {
-    "vendor": "Apache",
-    "product": "Log4j"
+    "vendor": "AirCall",
+    "product": "AirCall"
+  },
+  {
+    "vendor": "AnyDesk",
+    "product": "AnyDesk"
+  },
+  {
+    "vendor": "Atlassian",
+    "product": "Jira Cloud"
+  },
+  {
+    "vendor": "Atlassian",
+    "product": "Jira Service Manager"
+  },
+  {
+    "vendor": "Atlassian",
+    "product": "Confluence Cloud"
+  },
+  {
+    "vendor": "OpenAI",
+    "product": "ChatGPT"
+  },
+  {
+    "vendor": "Checkout",
+    "product": "Checkout"
   },
   {
     "vendor": "Cisco",
-    "product": "IOS"
+    "product": "AnyConnect VPN"
+  },
+  {
+    "vendor": "Cisco",
+    "product": "Meraki Dashboard"
+  },
+  {
+    "vendor": "Coeo",
+    "product": "Coeo"
+  },
+  {
+    "vendor": "Cookiebot",
+    "product": "Cookiebot"
+  },
+  {
+    "vendor": "Crazy Egg",
+    "product": "Crazy Egg"
+  },
+  {
+    "vendor": "dbt",
+    "product": "dbt"
+  },
+  {
+    "vendor": "Deel",
+    "product": "Deel"
+  },
+  {
+    "vendor": "Okta",
+    "product": "Desktop MFA"
+  },
+  {
+    "vendor": "Okta",
+    "product": "Desktop Password Sync"
+  },
+  {
+    "vendor": "Road",
+    "product": "E-Flux Dashboard"
+  },
+  {
+    "vendor": "Employes",
+    "product": "Employes"
+  },
+  {
+    "vendor": "Figma",
+    "product": "Figma"
+  },
+  {
+    "vendor": "Firehydrant",
+    "product": "Firehydrant"
+  },
+  {
+    "vendor": "Framer",
+    "product": "Framer"
+  },
+  {
+    "vendor": "Geckoboard",
+    "product": "Geckoboard"
+  },
+  {
+    "vendor": "HiBob",
+    "product": "HiBob"
+  },
+  {
+    "vendor": "HubSpot",
+    "product": "HubSpot"
+  },
+  {
+    "vendor": "Intercom",
+    "product": "Intercom"
+  },
+  {
+    "vendor": "Joan",
+    "product": "Joan"
+  },
+  {
+    "vendor": "Learning Bank",
+    "product": "Learning Bank"
+  },
+  {
+    "vendor": "Linear",
+    "product": "Linear"
+  },
+  {
+    "vendor": "LinkedIn",
+    "product": "LinkedIn"
+  },
+  {
+    "vendor": "Looker",
+    "product": "Looker"
+  },
+  {
+    "vendor": "Loom",
+    "product": "Loom"
+  },
+  {
+    "vendor": "Lusha",
+    "product": "B2B contact information"
+  },
+  {
+    "vendor": "Lyssna",
+    "product": "Lyssna"
+  },
+  {
+    "vendor": "MetaCompliance",
+    "product": "MetaCompliance"
+  },
+  {
+    "vendor": "Miro",
+    "product": "Miro"
+  },
+  {
+    "vendor": "MixPanel",
+    "product": "MixPanel"
+  },
+  {
+    "vendor": "OneFlow",
+    "product": "OneFlow"
+  },
+  {
+    "vendor": "Pantone",
+    "product": "Connect"
+  },
+  {
+    "vendor": "Payt",
+    "product": "Payt"
+  },
+  {
+    "vendor": "Phrase",
+    "product": "Parrot"
+  },
+  {
+    "vendor": "JetBrains",
+    "product": "PyCharm"
+  },
+  {
+    "vendor": "Recruitee",
+    "product": "Recruitee"
+  },
+  {
+    "vendor": "SemRush",
+    "product": "SemRush"
+  },
+  {
+    "vendor": "Sentry",
+    "product": "Sentry"
+  },
+  {
+    "vendor": "Simpro",
+    "product": "Simpro"
+  },
+  {
+    "vendor": "Snyk",
+    "product": "Snyk"
+  },
+  {
+    "vendor": "VTM",
+    "product": "VTM"
+  },
+  {
+    "vendor": "Zapier",
+    "product": "Zapier"
+  },
+  {
+    "vendor": "Kubernetes",
+    "product": "Kubernetes"
   }
+
 ]
