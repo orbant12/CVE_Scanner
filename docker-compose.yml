@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  cve-scanner:
+    build: .
+    container_name: cve-scanner
+    environment:
+      - NVD_API_KEY=${NVD_API_KEY}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_CHANNEL_ID=${SLACK_CHANNEL_ID}
+    volumes:
+      # Optional: Mount a local directory for logs or reports
+      - ./reports:/app/reports
+    restart: unless-stopped
+    
+  # Scheduled CVE scanner using cron-like scheduling
+  cve-scanner-daily:
+    build: .
+    container_name: cve-scanner-daily
+    environment:
+      - NVD_API_KEY=${NVD_API_KEY}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_CHANNEL_ID=${SLACK_CHANNEL_ID}
+    volumes:
+      - ./reports:/app/reports
+    command: >
+      sh -c "
+      while true; do
+        echo 'Running daily CVE scan at $(date)'
+        python runner.py --timeframe TODAY
+        echo 'Next scan in 24 hours'
+        sleep 86400
+      done
+      "
+    restart: unless-stopped
+
+  # Weekly scanner
+  cve-scanner-weekly:
+    build: .
+    container_name: cve-scanner-weekly
+    environment:
+      - NVD_API_KEY=${NVD_API_KEY}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_CHANNEL_ID=${SLACK_CHANNEL_ID}
+    volumes:
+      - ./reports:/app/reports
+    command: >
+      sh -c "
+      while true; do
+        echo 'Running weekly CVE scan at $(date)'
+        python runner.py --timeframe 'THIS WEEK'
+        echo 'Next weekly scan in 7 days'
+        sleep 604800
+      done
+      "
+    restart: unless-stopped
+    profiles:
+      - weekly
+
+networks:
+  default:
+    name: cve-scanner-network
